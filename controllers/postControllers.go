@@ -1,8 +1,9 @@
 package controllers
 
 import (
-	"fmt"
+	"strconv"
 
+	"github.com/Kachyr/crud/helpers"
 	"github.com/Kachyr/crud/initializers"
 	"github.com/Kachyr/crud/models"
 	"github.com/gin-gonic/gin"
@@ -27,7 +28,7 @@ func PostsCreate(c *gin.Context) {
 
 	if result.Error != nil {
 		c.Status(400)
-		fmt.Println("Error creating post:", result.Error)
+		println("Error creating post:", result.Error)
 		return
 	}
 
@@ -42,11 +43,52 @@ func GetAllPosts(c *gin.Context) {
 
 	if result.Error != nil {
 		c.Status(400)
-		fmt.Println("Error cant find posts:", result.Error)
+		println("Error cant find posts:", result.Error)
 		return
 	}
 
 	c.JSON(200, posts)
+}
+
+func GetPostsPaginated(c *gin.Context) {
+	posts := []models.Post{}
+	println(posts)
+	pageStr := c.DefaultQuery("page", "1")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		c.Status(400)
+		println("Error: ", err)
+		return
+	}
+
+	pageSizeStr := c.DefaultQuery("size", "10")
+	size, err := strconv.Atoi(pageSizeStr)
+	if err != nil {
+		c.Status(400)
+		println("Error: ", err)
+		return
+	}
+
+	offset := (page - 1) * size
+
+	result := initializers.DB.Limit(size).Offset(offset).Find(&posts)
+
+	if result.Error != nil {
+		c.Status(400)
+		println("Error cant find posts:", result.Error)
+		return
+	}
+
+	var totalElements int64
+	initializers.DB.Model(&models.Post{}).Count(&totalElements)
+
+	totalPages := helpers.CalculateTotalPages(int(totalElements), size)
+
+	c.JSON(200, models.PaginatedContent[models.Post]{
+		Data:       posts,
+		Page:       page,
+		TotalPages: totalPages,
+	})
 }
 
 func GetPost(c *gin.Context) {
@@ -56,7 +98,7 @@ func GetPost(c *gin.Context) {
 
 	if result.Error != nil {
 		c.Status(400)
-		fmt.Println("Error cant find posts:", result.Error)
+		println("Error cant find posts:", result.Error)
 		return
 	}
 
@@ -76,7 +118,7 @@ func UpdatePost(c *gin.Context) {
 
 	if result.Error != nil {
 		c.Status(400)
-		fmt.Println("Error cant find posts:", result.Error)
+		println("Error cant find posts:", result.Error)
 		return
 	}
 
@@ -86,7 +128,7 @@ func UpdatePost(c *gin.Context) {
 	result = initializers.DB.Save(&post)
 	if result.Error != nil {
 		c.Status(400)
-		fmt.Println("Error cant update posts:", result.Error)
+		println("Error cant update posts:", result.Error)
 		return
 	}
 
@@ -100,7 +142,7 @@ func DeletePost(c *gin.Context) {
 
 	if result.Error != nil {
 		c.Status(400)
-		fmt.Println("Error cant delete post:", result.Error)
+		println("Error cant delete post:", result.Error)
 		return
 	}
 

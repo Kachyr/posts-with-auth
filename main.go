@@ -14,13 +14,18 @@ func init() {
 }
 
 func main() {
+	setupAPIs()
+}
+
+func setupAPIs() {
 	r := gin.Default()
 	// Authentication
 	r.POST("/singup", controllers.SingUp)
 	r.POST("/login", controllers.LogIn)
 	// Posts
 	r.POST("/posts", middleware.RequireAuth, controllers.PostsCreate)
-	r.GET("/posts", controllers.GetAllPosts)
+	// r.GET("/posts", controllers.GetAllPosts)
+	r.GET("/posts", controllers.GetPostsPaginated)
 	r.GET("/posts/:id", controllers.GetPost)
 	r.PUT("/posts/:id", middleware.RequireAuth, controllers.UpdatePost)
 	r.DELETE("/posts/:id", middleware.RequireAuth, controllers.DeletePost)
